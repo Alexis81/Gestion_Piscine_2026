@@ -54,6 +54,22 @@ void updateDisplay();
 
 static String formatTemperature(float value) { return String(value, 1); }
 
+static bool readJsonBool(const JsonVariantConst &value, bool defaultValue = false) {
+  if (value.is<bool>()) {
+    return value.as<bool>();
+  }
+  if (value.is<int>()) {
+    return value.as<int>() != 0;
+  }
+  if (value.is<const char *>()) {
+    String text = value.as<const char *>();
+    text.trim();
+    text.toLowerCase();
+    return text == "true" || text == "1" || text == "on";
+  }
+  return defaultValue;
+}
+
 void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
@@ -87,7 +103,10 @@ void setup() {
   setupWiFi();
 
   client.setServer(MQTT_SERVER, MQTT_PORT);
+  client.setBufferSize(1024);
   client.setCallback(callbackMQTT);
+
+  Serial.printf("MQTT buffer size: %u\n", client.getBufferSize());
 
   ElegantOTA.begin(&server);
   server.on("/", []() {
@@ -250,7 +269,7 @@ void publishTemperatures() {
 void handlePumpMessage(const JsonDocument &doc) {
   pompeRpm = doc["rpm"] | 0;
   pompeRpmValid = doc["rpm_valid"] | false;
-  pompeRunning = doc["motor_running"] | false;
+  pompeRunning = readJsonBool(doc["motor_running"]);
   pompeTempEau = doc["temp_eau"] | -127.0f;
   pompeTempValid = doc["temp_valid"] | false;
   electrolyseDemandee = doc["electrolyse"] | false;

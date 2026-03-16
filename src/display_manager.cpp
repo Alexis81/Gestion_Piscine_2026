@@ -24,21 +24,23 @@ void DisplayManager::displayInfo(float tempEau, bool pompeEtat,
   }
 
   M5.Display.startWrite();
+  M5.Display.fillRect(0, 0, M5.Display.width(), 155, BLACK);
+
   M5.Display.setTextColor(WHITE, BLACK);
-  M5.Display.setTextSize(3);
-  M5.Display.setCursor(10, 20);
-  M5.Display.print("Piscine");
+  M5.Display.setTextSize(2);
+  M5.Display.setCursor(10, 18);
+  M5.Display.print("Eau");
+
+  M5.Display.setTextSize(5);
+  M5.Display.setCursor(10, 45);
+  M5.Display.printf("%4.1f C", tempEau);
 
   M5.Display.setTextSize(2);
-  M5.Display.setCursor(10, 60);
-  M5.Display.setTextColor(BLUE, BLACK);
-  M5.Display.printf("Eau   : %5.1f C ", tempEau);
-
-  M5.Display.setCursor(10, 95);
+  M5.Display.setCursor(10, 110);
   M5.Display.setTextColor(WHITE, BLACK);
   M5.Display.printf("Pompe : %s   ", pompeEtat ? "ON" : "OFF");
 
-  M5.Display.setCursor(10, 130);
+  M5.Display.setCursor(10, 145);
   M5.Display.printf("Electrolyse: %s   ", electrolyseEtat ? "ON" : "OFF");
 
   M5.Display.setTextSize(1);

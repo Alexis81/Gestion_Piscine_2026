@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 // WiFi and MQTT Settings
 //------------------------------------------------------------------------------
-#define WIFI_SSID "Livebox-8310"
+#define WIFI_SSID "Ghost"
 #define WIFI_PASSWORD "zounette"
 
 #define MQTT_SERVER "192.168.1.20"
