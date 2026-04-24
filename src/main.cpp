@@ -5,6 +5,9 @@
 // - lecture des 3 sondes DS18B20 toutes les 10 secondes
 // - publication MQTT a chaque lecture sur domos/piscine/valeurs
 // - ecoute du topic domos/piscine/pompe pour piloter le relais electrolyse
+//
+// -- Mise à jour OTA via ElegantOTA (http://<IP_ADDRESS>/update)
+// http://192.168.1.113/update
 //------------------------------------------------------------------------------------
 
 #include "config.h"
@@ -44,6 +47,7 @@ bool stateElectrolyse = false;
 unsigned long lastTempRead = 0;
 
 void setupWiFi();
+void handleWiFiConnection();
 void reconnectMQTT();
 void callbackMQTT(char *topic, byte *payload, unsigned int length);
 void updateTemperatures();
@@ -122,13 +126,19 @@ void setup() {
 
 void loop() {
   M5.update();
-  server.handleClient();
-  ElegantOTA.loop();
+  handleWiFiConnection();
 
-  if (!client.connected()) {
+  if (WiFi.status() == WL_CONNECTED) {
+    server.handleClient();
+    ElegantOTA.loop();
+  }
+
+  if (WiFi.status() == WL_CONNECTED && !client.connected()) {
     reconnectMQTT();
   }
-  client.loop();
+  if (client.connected()) {
+    client.loop();
+  }
 
   static bool lastWifiStatus = true;
   bool currentWifiStatus = (WiFi.status() == WL_CONNECTED);
@@ -161,6 +171,10 @@ void loop() {
 void setupWiFi() {
   Serial.print("Connexion WiFi: ");
   Serial.println(WIFI_SSID);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.persistent(false);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   int retry = 0;
@@ -179,8 +193,33 @@ void setupWiFi() {
   }
 }
 
+void handleWiFiConnection() {
+  static unsigned long lastReconnectAttempt = 0;
+
+  if (WiFi.status() == WL_CONNECTED) {
+    return;
+  }
+
+  if (client.connected()) {
+    client.disconnect();
+  }
+
+  if (millis() - lastReconnectAttempt < 10000) {
+    return;
+  }
+
+  lastReconnectAttempt = millis();
+  Serial.println("WiFi deconnecte, relance de la connexion...");
+  WiFi.disconnect(false);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+}
+
 void reconnectMQTT() {
   static unsigned long lastReconnectAttempt = 0;
+  if (WiFi.status() != WL_CONNECTED) {
+    return;
+  }
+
   if (millis() - lastReconnectAttempt <= 5000) {
     return;
   }
@@ -255,8 +294,9 @@ void publishTemperatures() {
   doc["temp_air"] = formatTemperature(tempAir);
   doc["temp_local"] = formatTemperature(tempLocal);
   doc["electrolyse"] = stateElectrolyse;
+  doc["ip"] = WiFi.localIP().toString();
 
-  char buffer[192];
+  char buffer[224];
   serializeJson(doc, buffer, sizeof(buffer));
   client.publish(MQTT_TOPIC_VALEURS, buffer);
 
