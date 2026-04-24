@@ -323,7 +323,7 @@ void handlePumpMessage(const JsonDocument &doc) {
 
 void applyElectrolyseRule() {
   bool shouldEnable = pompeRunning && pompeRpmValid && pompeTempValid &&
-                      electrolyseDemandee && (pompeRpm > 2000) &&
+                      electrolyseDemandee && (pompeRpm > ELECTROLYSE_MIN_RPM) &&
                       (pompeTempEau > 16.0f);
 
   stateElectrolyse = shouldEnable;

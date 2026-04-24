@@ -34,6 +34,7 @@ static const unsigned long TEMP_READ_INTERVAL = 10 * 1000UL;
 // Relay Settings (M5Stack 2-Relay Module)
 //------------------------------------------------------------------------------
 #define ELECTROLYSE_RELAY_INDEX 1
+#define ELECTROLYSE_MIN_RPM 1200
 
 //------------------------------------------------------------------------------
 // Display Settings
